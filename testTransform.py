@@ -37,5 +37,7 @@ sns.regplot(x=test_audio.input_clip[0][0:100000], y=test_audio.output_clip[0][0:
 #calculate differences between linear output and actual output
 #fit a linear regression with scikit and compare
 
-test_audio.transform_linear_multi(3)
+test_audio.fit_linear_multi(100)
+multi_step_weights = test_audio.linear_multi_model.get_layer(index=0).get_weights()
+sns.lineplot(data=multi_step_weights[0])
 

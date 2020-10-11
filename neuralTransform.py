@@ -59,18 +59,18 @@ class neuralTransform:
         print('creating linear_mode.png')
         plot_model(self.linear_model, to_file='linear_model.png', show_shapes=True, show_layer_names=True)
         
-    def transform_linear_multi(self, lookback):
+    def fit_linear_multi(self, lookback):
         #create new input and output lists including lookback
         X, Y = [], []
         for i in range(len(self.input_clip[0]) - lookback):
             X.append(self.input_clip[0][i:i+lookback])
             Y.append(self.output_clip[0][i+lookback])
         #turn back into arrays
-        X = np.asarray(X)
-        Y = np.asarray(Y)
+        self.multi_step_input = np.asarray(X)
+        self.multi_step_output = np.asarray(Y)
         
         #add a multi-input basic layer
-        self.linear_multi_model.add(Dense(lookback, input_shape=(lookback,), input_dim=lookback))
+        self.linear_multi_model.add(Dense(1, input_shape=(lookback,), input_dim=lookback))
         #create optimizer (to be refined)
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, 
                                              beta_1=0.9, 
@@ -83,5 +83,8 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit linear model to data
-        self.linear_multi_model.fit(X, Y, epochs=4, batch_size=1024, use_multiprocessing=True, workers=4)
+        self.linear_multi_model.fit(self.multi_step_input, self.multi_step_output, epochs=4, batch_size=1024, use_multiprocessing=True, workers=4)
+    
+    def transform_linear_multi(self):
+        return self.linear_multi_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=1024)
     
