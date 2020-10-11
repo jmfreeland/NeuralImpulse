@@ -10,11 +10,12 @@ import neuralTransform as nt
 import librosa
 import librosa.display
 import matplotlib.pyplot as plt
-
+import numpy as np
+import seaborn as sns
 
 test_audio = nt.neuralTransform('C:/users/freel/Desktop/neuralImpulse/SL68Trial_Raw.aif',
                             'C:/users/freel/Desktop/neuralImpulse/SL68Trial.aif',
-                            48000)
+                            96000)
 
 plt.figure()
 test_audio.plot_input()
@@ -28,5 +29,13 @@ plt.figure()
 plt.plot(linear_output)
 test_audio.visualize_linear()
 
-linear_weights = test_audio.linear_model.get_layer(name='dense_1').get_weights()
+linear_weights = test_audio.linear_model.get_layer(index=0).get_weights()
+linear_diff = np.transpose(test_audio.output_clip[0]) - linear_output[:,0]
+plt.figure()
+plt.plot(linear_diff)
+sns.regplot(x=test_audio.input_clip[0][0:100000], y=test_audio.output_clip[0][0:100000])
+#calculate differences between linear output and actual output
+#fit a linear regression with scikit and compare
+
+test_audio.transform_linear_multi(3)
 
