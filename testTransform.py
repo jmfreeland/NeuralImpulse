@@ -12,8 +12,8 @@ import librosa.display
 import matplotlib.pyplot as plt
 
 
-test_audio = nt.neuralTransform('C:/users/freel/Desktop/neuralImage/SL68Trial_Raw.aif',
-                            'C:/users/freel/Desktop/neuralImage/SL68Trial.aif',
+test_audio = nt.neuralTransform('C:/users/freel/Desktop/neuralImpulse/SL68Trial_Raw.aif',
+                            'C:/users/freel/Desktop/neuralImpulse/SL68Trial.aif',
                             48000)
 
 plt.figure()
