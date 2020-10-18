@@ -83,7 +83,7 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit linear model to data
-        self.linear_multi_model.fit(self.multi_step_input, self.multi_step_output, epochs=4, batch_size=1024, use_multiprocessing=True, workers=4)
+        self.linear_multi_model.fit(self.multi_step_input, self.multi_step_output, epochs=5, batch_size=512, use_multiprocessing=True, workers=5)
     
     def transform_linear_multi(self):
         return self.linear_multi_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=1024)
