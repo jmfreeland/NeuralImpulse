@@ -119,25 +119,25 @@ class neuralTransform:
     
     def fit_dense2(self, neurons_l1, neurons_l2, batch_sz, epoch_count):
         #lets initialize a another model now and add two layers
-        self.dense_2_model = Sequential()
+        self.dense2_model = Sequential()
         
         #add a multi-input basic layer and second layer
-        self.dense_2_model.add(Dense(neurons_l1, activation='relu', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
-        self.dense_2_model.add(Dense(neurons_l2, activation='relu'))
-     
+        self.dense2_model.add(Dense(neurons_l1, activation='relu', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
+        self.dense2_model.add(Dense(neurons_l2, activation='relu'))
+        self.dense2_model.add(Dense(1))
         #create optimizer (to be refined)
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, 
                                               beta_1=0.9, 
                                               beta_2=0.99, 
                                               epsilon=1e-05, 
                                               amsgrad=False,
-                                              name='SGD')
+                                              name='Adam')
         #compile two-layer model
-        self.dense_2_model.compile(loss='mse', 
+        self.dense2_model.compile(loss='mse', 
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit model to data
-        self.dense_2_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=5)
+        self.dense2_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=5)
         
     def transform_dense2(self):
         return self.dense2_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)

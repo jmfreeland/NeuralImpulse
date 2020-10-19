@@ -71,22 +71,35 @@ fig.suptitle('multi-step linear model output')
 librosa.display.waveplot(y=linear_multi_output[:,0], sr=96000)
 
 linear_multi_diff = np.transpose(test_audio.output_clip[0])[1000:] - linear_multi_output[:,0]
-fig = plt.figure(dpi=200, figsize=(9,6))
+fig = plt.figure(dpi=300, figsize=(9,6))
 fig.suptitle('difference with linear multi-step model')
 librosa.display.waveplot(y=linear_multi_diff, sr=96000)
 
 #output to audio file
 sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_linear_multistep_1000.wav', linear_multi_output, 96000)
 
+#test dense single-layer model
 test_audio.fit_dense(64,1024,1)
 test_audio.dense_model.summary()
 dense_model_output = test_audio.transform_dense()
 
-#how does it look?
+#how does single-layer dense model look?
 fig=plt.figure(dpi=300, figsize=(9,6))
 fig.suptitle('single-layer dense model output')
 librosa.display.waveplot(y=dense_model_output[:,0], sr=96000)
 sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_dense.wav', dense_model_output, 96000)
+
+#test dense double layer model
+test_audio.fit_dense2(128,32,1024,1)
+test_audio.dense2_model.summary()
+dense2_model_output = test_audio.transform_dense2()
+
+#how does two-layer dense model look?
+fig=plt.figure(dpi=300, figsize=(9,6))
+fig.suptitle('double-layer dense model output')
+librosa.display.waveplot(y=dense_model_output[:,0], sr=96000)
+sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_dense2.wav', dense2_model_output, 96000)
+
 
 # print('fitting linear multi-step model with 1000 sample lookback')
 # test_audio.fit_linear_multi(1000, 1, 1)
