@@ -1,0 +1,16 @@
+SL68Trial_Raw - This is the raw output of a 100W marshall (no speaker) brought down to line level. It sounds, for lack of a better word, awful.
+SL68Trial - This is processed via a commercial IR. It's pretty close to a mic'ed cabinet, though if you hear actual comparisons, you'll still almost surely chose the mic'ed cabinet. 
+
+linear - This simply fits a basic y=mx + b regression model to the input. Not much positive about this one.
+
+linear_multistep_1000 - This fits a linear model using the last 1000 samples. It's essentially reverse engineering an IR. Memory limitations prevent me from going beyond 1000 samples so far. Creating a 1000 sample rolling window of an entire audio file of this length gets you to 20+ gigabytes! For next week: smaller files, 48Khz not 96Khz.
+
+dense - This fits our first neural network using 64 neurons with the 1000 sample input. This allows each one individually to work with the previous 1000 samples. It improves slightly on the linear multistep model. 
+
+dense2 - Here we use a 2 layer network. Statistically its doing a bit better than the first one.
+
+dense3 - On to three layers. Again doing a bit better statistically, but it's going to require something more clever to continue making improvement. 
+
+rnn_dense3 - this adds a recurrent layer to front of the model where the output of the last step is remembered at each new sample. We're down to about a 1% error here, but audibly there's work to do. It's taking about half an hour to train this, and hopefully it can be sped up to move faster next week. 
+
+dense3_rnn - this adds the recurrent layer to the back. it's much faster, but so far not quite as good.

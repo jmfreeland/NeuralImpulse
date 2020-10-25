@@ -28,7 +28,7 @@ test_audio = nt.neuralTransform('C:/users/freel/Desktop/neuralImpulse/input_unpr
                             'C:/users/freel/Desktop/neuralImpulse/input_processed/SL68Trial.aif',
                             96000,
                             .001,
-                            1,
+                            4,
                             8192)
 
 #start by graphing the input signal and output signal for reference
