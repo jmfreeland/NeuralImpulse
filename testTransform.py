@@ -27,7 +27,9 @@ gc.collect()
 test_audio = nt.neuralTransform('C:/users/freel/Desktop/neuralImpulse/input_unprocessed/SL68Trial_Raw.aif',
                             'C:/users/freel/Desktop/neuralImpulse/input_processed/SL68Trial.aif',
                             96000,
-                            .001)
+                            .001,
+                            1,
+                            8192)
 
 #start by graphing the input signal and output signal for reference
 fig = plt.figure(dpi=300, figsize=(9,6))

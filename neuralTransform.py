@@ -21,12 +21,14 @@ import numpy as np
 
 class neuralTransform:
     
-    def __init__(self, input_clip, output_clip, sample_rate, learning_rt):
+    def __init__(self, input_clip, output_clip, sample_rate, learning_rt, epoch_count, batch_sz):
         #object requires an input file & an output file to start
         self.input_clip = librosa.load(input_clip, sr=sample_rate)
         self.output_clip = librosa.load(output_clip, sr=sample_rate)
         self.sample_rate = sample_rate
         self.learning_rt = learning_rt
+        self.epoch_count = epoch_count
+        self.batch_sz = batch_sz
 
         #create different model types
 
@@ -55,16 +57,16 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit linear model to data
-        self.linear_model.fit(self.input_clip[0], self.output_clip[0], epochs=1, batch_size=512, use_multiprocessing=True, workers=8)
+        self.linear_model.fit(self.input_clip[0], self.output_clip[0], epochs=self.epoch_count, batch_size=self.batch_sz, use_multiprocessing=True, workers=8)
         
     def transform_linear(self):
-        return self.linear_model.predict(self.input_clip[0], use_multiprocessing=True, batch_size=1024)
+        return self.linear_model.predict(self.input_clip[0], use_multiprocessing=True, batch_size=self.batch_sz)
     
     def visualize_linear(self):
         print('creating linear_mode.png')
         plot_model(self.linear_model, to_file='linear_model.png', show_shapes=True, show_layer_names=True)
         
-    def fit_linear_multi(self, lookback, batch_sz, epoch_count):
+    def fit_linear_multi(self, lookback):
         #create new input and output lists including lookback
         self.linear_multi_model = Sequential()
         X, Y = [], []
@@ -90,14 +92,14 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit linear model to data
-        self.linear_multi_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        self.linear_multi_model.fit(self.multi_step_input, self.multi_step_output, epochs=self.epoch_count, batch_size=self.batch_sz, use_multiprocessing=True, workers=8)
 
 
     def transform_linear_multi(self):
-        return self.linear_multi_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+        return self.linear_multi_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=self.batch_sz)
 
 
-    def fit_dense(self, neurons, batch_sz, epoch_count):
+    def fit_dense(self, neurons):
         #create dense model with multiple neurons
         self.dense_model = Sequential(name='dense')
         
@@ -116,13 +118,13 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit model to data
-        self.dense_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        self.dense_model.fit(self.multi_step_input, self.multi_step_output, epochs=self.epoch_count, batch_size=self.batch_sz, use_multiprocessing=True, workers=8)
 
     def transform_dense(self):
-        return self.dense_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+        return self.dense_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=self.batch_sz)
 
     
-    def fit_dense2(self, neurons_l1, neurons_l2, batch_sz, epoch_count):
+    def fit_dense2(self, neurons_l1, neurons_l2):
         #lets initialize a another model now and add two layers
         self.dense2_model = Sequential(name='dense2')
         
@@ -142,12 +144,12 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit model to data
-        self.dense2_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        self.dense2_model.fit(self.multi_step_input, self.multi_step_output, epochs=self.epoch_count, batch_size=self.batch_sz, use_multiprocessing=True, workers=8)
         
     def transform_dense2(self):
-        return self.dense2_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+        return self.dense2_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=self.batch_sz)
 
-    def fit_dense3(self, neurons_l1, neurons_l2, neurons_l3, batch_sz, epoch_count):
+    def fit_dense3(self, neurons_l1, neurons_l2, neurons_l3):
         #lets initialize a another model now and add two layers
         self.dense3_model = Sequential(name='dense3')
         
@@ -168,12 +170,12 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit model to data
-        self.dense3_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        self.dense3_model.fit(self.multi_step_input, self.multi_step_output, epochs=self.epoch_count, batch_size=self.batch_sz, use_multiprocessing=True, workers=8)
         
     def transform_dense3(self):
-        return self.dense3_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+        return self.dense3_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=self.batch_sz)
 
-    def fit_rnn_dense3(self, neurons_l1, neurons_prernn1, neurons_l2, neurons_l3, batch_sz, epoch_count):
+    def fit_rnn_dense3(self, neurons_l1, neurons_prernn1, neurons_l2, neurons_l3):
         #lets initialize a another model now and add two layers
         self.rnn_dense3_model = Sequential(name='rnn_dense3')
         
@@ -196,13 +198,13 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit model to data
-        self.rnn_dense3_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        self.rnn_dense3_model.fit(self.multi_step_input, self.multi_step_output, epochs=self.epoch_count, batch_size=self.batch_sz, use_multiprocessing=True, workers=8)
         
     def transform_rnn_dense3(self):
-        return self.rnn_dense3_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+        return self.rnn_dense3_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=self.batch_sz)
 
 
-    def fit_dense3_rnn(self, neurons_l1, neurons_l2, neurons_l3, batch_sz, epoch_count):
+    def fit_dense3_rnn(self, neurons_l1, neurons_l2, neurons_l3):
 
         self.dense3_rnn_model = Sequential(name='dense3_rnn')
                 
@@ -225,7 +227,7 @@ class neuralTransform:
                                           metrics=['mse', 'mae'])
         
         self.dense3_rnn_model.summary()
-        self.dense3_rnn_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        self.dense3_rnn_model.fit(self.multi_step_input, self.multi_step_output, epochs=self.epoch_count, batch_size=self.batch_sz, use_multiprocessing=True, workers=8)
         
     def transform_dense3_rnn(self):
-        return self.dense3_rnn_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+        return self.dense3_rnn_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=self.batch_sz)
