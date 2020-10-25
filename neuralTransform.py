@@ -9,19 +9,24 @@ Object created to take an audio input file & audio output file and create a
 
 import librosa
 import librosa.display
-from keras.models import Sequential
-from keras.layers import Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import SimpleRNN
 from keras.utils.vis_utils import plot_model
 import tensorflow as tf
 import numpy as np
 
+#set global variables for batch size, learning rate, epochs, optimizer, etc
+
+
 class neuralTransform:
     
-    def __init__(self, input_clip, output_clip, sample_rate):
+    def __init__(self, input_clip, output_clip, sample_rate, learning_rt):
         #object requires an input file & an output file to start
         self.input_clip = librosa.load(input_clip, sr=sample_rate)
         self.output_clip = librosa.load(output_clip, sr=sample_rate)
         self.sample_rate = sample_rate
+        self.learning_rt = learning_rt
 
         #create different model types
 
@@ -39,7 +44,7 @@ class neuralTransform:
         #add single layer with one neuron
         self.linear_model.add(Dense(1, input_shape=(1,), input_dim=1))
         #create optimizer (to be refined)
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, 
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rt, 
                                              beta_1=0.9, 
                                              beta_2=0.99, 
                                              epsilon=1e-05, 
@@ -50,7 +55,7 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit linear model to data
-        self.linear_model.fit(self.input_clip[0], self.output_clip[0], epochs=4, batch_size=1024, use_multiprocessing=True, workers=4)
+        self.linear_model.fit(self.input_clip[0], self.output_clip[0], epochs=1, batch_size=512, use_multiprocessing=True, workers=8)
         
     def transform_linear(self):
         return self.linear_model.predict(self.input_clip[0], use_multiprocessing=True, batch_size=1024)
@@ -74,7 +79,7 @@ class neuralTransform:
         #add a multi-input basic layer
         self.linear_multi_model.add(Dense(1, input_shape=(lookback,), input_dim=lookback))
         #create optimizer (to be refined)
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, 
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rt, 
                                               beta_1=0.9, 
                                               beta_2=0.99, 
                                               epsilon=1e-05, 
@@ -85,7 +90,7 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit linear model to data
-        self.linear_multi_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=5)
+        self.linear_multi_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
 
 
     def transform_linear_multi(self):
@@ -94,13 +99,13 @@ class neuralTransform:
 
     def fit_dense(self, neurons, batch_sz, epoch_count):
         #create dense model with multiple neurons
-        self.dense_model = Sequential()
+        self.dense_model = Sequential(name='dense')
         
         #add a multi-input basic layer with parameterized neurons
-        self.dense_model.add(Dense(neurons, activation='relu', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
-        self.dense_model.add(Dense(1))
+        self.dense_model.add(Dense(neurons, name='dense_1', activation='tanh', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
+        self.dense_model.add(Dense(1, name='dense_out'))
         #create optimizer (to be refined)
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, 
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rt, 
                                               beta_1=0.9, 
                                               beta_2=0.99, 
                                               epsilon=1e-05, 
@@ -111,7 +116,7 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit model to data
-        self.dense_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=5)
+        self.dense_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
 
     def transform_dense(self):
         return self.dense_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
@@ -119,14 +124,14 @@ class neuralTransform:
     
     def fit_dense2(self, neurons_l1, neurons_l2, batch_sz, epoch_count):
         #lets initialize a another model now and add two layers
-        self.dense2_model = Sequential()
+        self.dense2_model = Sequential(name='dense2')
         
         #add a multi-input basic layer and second layer
-        self.dense2_model.add(Dense(neurons_l1, activation='relu', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
-        self.dense2_model.add(Dense(neurons_l2, activation='relu'))
-        self.dense2_model.add(Dense(1))
+        self.dense2_model.add(Dense(neurons_l1, name='dense2_1', activation='tanh', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
+        self.dense2_model.add(Dense(neurons_l2, name='dense2_2', activation='tanh'))
+        self.dense2_model.add(Dense(1, name='dense2_out'))
         #create optimizer (to be refined)
-        optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, 
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rt, 
                                               beta_1=0.9, 
                                               beta_2=0.99, 
                                               epsilon=1e-05, 
@@ -137,7 +142,90 @@ class neuralTransform:
                                   optimizer= optimizer, 
                                   metrics=['mse', 'mae'])
         #fit model to data
-        self.dense2_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=5)
+        self.dense2_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
         
     def transform_dense2(self):
         return self.dense2_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+
+    def fit_dense3(self, neurons_l1, neurons_l2, neurons_l3, batch_sz, epoch_count):
+        #lets initialize a another model now and add two layers
+        self.dense3_model = Sequential(name='dense3')
+        
+        #add a multi-input basic layer and second layer
+        self.dense3_model.add(Dense(neurons_l1, name='dense3_1', activation='tanh', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
+        self.dense3_model.add(Dense(neurons_l2, name='dense3_2', activation='tanh'))
+        self.dense3_model.add(Dense(neurons_l3, name='dense3_3', activation='tanh'))
+        self.dense3_model.add(Dense(1, name='dense3_out'))
+        #create optimizer (to be refined)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rt, 
+                                              beta_1=0.9, 
+                                              beta_2=0.99, 
+                                              epsilon=1e-05, 
+                                              amsgrad=False,
+                                              name='Adam')
+        #compile two-layer model
+        self.dense3_model.compile(loss='mse', 
+                                  optimizer= optimizer, 
+                                  metrics=['mse', 'mae'])
+        #fit model to data
+        self.dense3_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        
+    def transform_dense3(self):
+        return self.dense3_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+
+    def fit_rnn_dense3(self, neurons_l1, neurons_prernn1, neurons_l2, neurons_l3, batch_sz, epoch_count):
+        #lets initialize a another model now and add two layers
+        self.rnn_dense3_model = Sequential(name='rnn_dense3')
+        
+        #add a multi-input basic layer and second layer
+        self.rnn_dense3_model.add(Dense(neurons_l1, name='rnn_dense3_1', activation='tanh', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
+        self.rnn_dense3_model.add(tf.keras.layers.Reshape((neurons_l1, 1)))
+        self.rnn_dense3_model.add(SimpleRNN(neurons_prernn1, name='rnn_dense3_r1', activation='tanh'))
+        self.rnn_dense3_model.add(Dense(neurons_l2, name='rnn_dense3_2', activation='tanh'))
+        self.rnn_dense3_model.add(Dense(neurons_l3, name='rnn_dense3_3', activation='tanh'))
+        self.rnn_dense3_model.add(Dense(1, name='rnn_dense3_out'))
+        #create optimizer (to be refined)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rt, 
+                                              beta_1=0.9, 
+                                              beta_2=0.99, 
+                                              epsilon=1e-05, 
+                                              amsgrad=False,
+                                              name='Adam')
+        #compile two-layer model
+        self.rnn_dense3_model.compile(loss='mae', 
+                                  optimizer= optimizer, 
+                                  metrics=['mse', 'mae'])
+        #fit model to data
+        self.rnn_dense3_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        
+    def transform_rnn_dense3(self):
+        return self.rnn_dense3_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
+
+
+    def fit_dense3_rnn(self, neurons_l1, neurons_l2, neurons_l3, batch_sz, epoch_count):
+
+        self.dense3_rnn_model = Sequential(name='dense3_rnn')
+                
+                #add a multi-input basic layer and second layer
+        self.dense3_rnn_model.add(Dense(neurons_l1, name='rnn_dense3_1', kernel_initializer='glorot_normal', activation='tanh', input_shape=(self.multi_step_input.shape[1],), input_dim=self.multi_step_input.shape[1]))
+        self.dense3_rnn_model.add(Dense(neurons_l2, name='rnn_dense3_2', kernel_initializer='glorot_normal', activation='tanh'))
+        self.dense3_rnn_model.add(Dense(neurons_l3, name='rnn_dense3_3', kernel_initializer='glorot_normal', activation='tanh'))
+        self.dense3_rnn_model.add(tf.keras.layers.Reshape((neurons_l3, 1)))
+        self.dense3_rnn_model.add(SimpleRNN(1, name='rnn_dense3_out', activation='tanh'))
+                #create optimizer (to be refined)
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.learning_rt, 
+                                                     beta_1=0.9, 
+                                                      beta_2=0.99, 
+                                                      epsilon=1e-05, 
+                                                      amsgrad=False,
+                                                      name='Adam')
+                #compile two-layer model
+        self.dense3_rnn_model.compile(loss='mse', 
+                                          optimizer= optimizer, 
+                                          metrics=['mse', 'mae'])
+        
+        self.dense3_rnn_model.summary()
+        self.dense3_rnn_model.fit(self.multi_step_input, self.multi_step_output, epochs=epoch_count, batch_size=batch_sz, use_multiprocessing=True, workers=8)
+        
+    def transform_dense3_rnn(self):
+        return self.dense3_rnn_model.predict(self.multi_step_input, use_multiprocessing=True, batch_size=512)
