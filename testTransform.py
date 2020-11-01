@@ -12,8 +12,10 @@ import librosa
 import librosa.display
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import seaborn as sns
 import soundfile as sf
+
 from keras import backend as K
 import gc
 
@@ -27,9 +29,10 @@ gc.collect()
 test_audio = nt.neuralTransform('C:/users/freel/Desktop/neuralImpulse/input_unprocessed/SL68Trial_Raw.aif',
                             'C:/users/freel/Desktop/neuralImpulse/input_processed/SL68Trial.aif',
                             96000,
-                            .001,
-                            4,
-                            8192)
+                            learning_rt=.001,
+                            epoch_count=3,
+                            batch_sz=4096,
+                            dropout_rate=.1)
 
 #start by graphing the input signal and output signal for reference
 fig = plt.figure(dpi=300, figsize=(9,6))
@@ -41,7 +44,7 @@ test_audio.plot_output()
 
 #now fit a simple y=mx + b linear model where the input signal is multiplied
 #by a constant and has a constant added. This is an absolute baseline toy model
-print('fitting simple linear model')
+print('\nfitting simple linear model')
 test_audio.fit_linear()
 test_audio.linear_model.summary()
 linear_output = test_audio.transform_linear()
@@ -64,7 +67,7 @@ sns.regplot(x=test_audio.input_clip[0][0:10000], y=test_audio.output_clip[0][0:1
 sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_linear.wav', linear_output, 96000)
 #fit a linear regression with scikit and compare
 
-print('fitting linear multi-step model with 1000 sample lookback')
+print('\nfitting linear multi-step model with 1000 sample lookback')
 test_audio.fit_linear_multi(1000)
 test_audio.linear_multi_model.summary()
 multi_step_weights = test_audio.linear_multi_model.get_layer(index=0).get_weights()
@@ -84,6 +87,7 @@ librosa.display.waveplot(y=linear_multi_diff, sr=96000)
 #output to audio file
 sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_linear_multistep_1000.wav', linear_multi_output, 96000)
 
+print('\nfitting single-layer model with 1000 sample lookback')
 #test dense single-layer model
 test_audio.fit_dense(64)
 test_audio.dense_model.summary()
@@ -95,8 +99,9 @@ fig.suptitle('single-layer dense model output')
 librosa.display.waveplot(y=dense_model_output[:,0], sr=96000)
 sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_dense.wav', dense_model_output, 96000)
 
+print('\nfitting double-layer model with 1000 sample lookback')
 #test dense double layer model
-test_audio.fit_dense2(128,32)
+test_audio.fit_dense2(256,64)
 test_audio.dense2_model.summary()
 dense2_model_output = test_audio.transform_dense2()
 
@@ -106,6 +111,7 @@ fig.suptitle('double-layer dense model output')
 librosa.display.waveplot(y=dense2_model_output[:,0], sr=96000)
 sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_dense2.wav', dense2_model_output, 96000)
 
+print('\nfitting three-layer model with 1000 sample lookback')
 #test dense three-layer model
 test_audio.fit_dense3(128,64,32)
 test_audio.dense3_model.summary()
@@ -118,14 +124,14 @@ librosa.display.waveplot(y=dense3_model_output[:,0], sr=96000)
 sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_dense3.wav', dense3_model_output, 96000)
 
 #test three layer model with rnn after first stage
-test_audio.fit_rnn_dense3(64,32,16,8)
+test_audio.fit_rnn_dense3(128,64,32,16)
 test_audio.rnn_dense3_model.summary()
 rnn_dense3_model_output = test_audio.transform_rnn_dense3()
 
 fig=plt.figure(dpi=300, figsize=(9,6))
 fig.suptitle('early rnn, triple-layer dense model output')
 librosa.display.waveplot(y=rnn_dense3_model_output[:,0], sr=96000)
-sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_rnn_dense3.wav', dense3_model_output, 96000)
+sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_rnn_dense3.wav', rnn_dense3_model_output, 96000)
 
 #test three layer model with rnn as output
 test_audio.fit_dense3_rnn(128,64,32)
@@ -133,23 +139,30 @@ dense3_rnn_model_output = test_audio.transform_rnn_dense3()
 
 fig=plt.figure(dpi=300, figsize=(9,6))
 fig.suptitle('late rnn, triple-layer dense model output')
-librosa.display.waveplot(y=rnn_dense3_model_output[:,0], sr=96000)
-sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_dense3_rnn.wav', dense3_model_output, 96000)
+librosa.display.waveplot(y=dense3_rnn_model_output[:,0], sr=96000)
+sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_dense3_rnn.wav', dense3_rnn_model_output, 96000)
+
+#test three layer model with lstm after first stage
+test_audio.fit_lstm_dense3(128,64,32,16)
+test_audio.lstm_dense3_model.summary()
+lstm_dense3_model_output = test_audio.transform_lstm_dense3()
+
+fig=plt.figure(dpi=300, figsize=(9,6))
+fig.suptitle('early lstm, triple-layer dense model output')
+librosa.display.waveplot(y=lstm_dense3_model_output[:,0], sr=96000)
+sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_lstm_dense3.wav', lstm_dense3_model_output, 96000)
+
+#test three layer model with rnn as output
+test_audio.fit_dense3_lstm(128,64,32)
+dense3_lstm_model_output = test_audio.transform_dense3_lstm()
+
+fig=plt.figure(dpi=300, figsize=(9,6))
+fig.suptitle('late lstm, triple-layer dense model output')
+librosa.display.waveplot(y=dense3_lstm_model_output[:,0], sr=96000)
+sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_dense3_lstm.wav', dense3_lstm_model_output, 96000)
 
 
-# print('fitting linear multi-step model with 1000 sample lookback')
-# test_audio.fit_linear_multi(1000, 1, 1)
-# multi_step_weights = test_audio.linear_multi_model.get_layer(index=0).get_weights()
-# fig = plt.figure(dpi=300, figsize=(9,6))
-# sns.lineplot(data=multi_step_weights[0])
 
-# linear_multi_output = test_audio.transform_linear_multi()
-# sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_linear_multistep_1000.wav', linear_multi_output, 96000)
-
-# test_audio.fit_linear_multi(6400)
-# multi_step_weights = test_audio.linear_multi_model.get_layer(index=0).get_weights()
-# fig = plt.figure(dpi=300, figsize=(9,6))
-# sns.lineplot(data=multi_step_weights[0])
-
-# linear_multi_output = test_audio.transform_linear_multi()
-# sf.write('C:/users/freel/Desktop/neuralImpulse/output/SL68_linear_multistep_6400.wav', linear_multi_output, 96000)
+#show the training history
+test_audio.plot_errors()
+plt.clear()
